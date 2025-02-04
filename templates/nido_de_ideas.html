@@ -168,7 +168,8 @@
         window.onload = async () => {
             const querySnapshot = await db.collection("ideas").get();
             querySnapshot.forEach((doc) => {
-                addIdeaToCategory(doc.data().idea, doc.data().category, doc.id);
+                const data = doc.data();
+                addIdeaToCategory(data.idea, data.category, doc.id);
             });
         };
 
@@ -186,17 +187,19 @@
 
         function addIdeaToCategory(idea, category, id) {
             const list = document.getElementById(category);
-            const listItem = document.createElement('li');
-            listItem.className = 'idea-item';
-            listItem.innerHTML = `
-                <span>${idea}</span>
-                <input type="checkbox" />
-            `;
-            listItem.querySelector('input').addEventListener('change', async function () {
-                listItem.remove();
-                await db.collection("ideas").doc(id).delete();
-            });
-            list.appendChild(listItem);
+            if (list) {
+                const listItem = document.createElement('li');
+                listItem.className = 'idea-item';
+                listItem.innerHTML = `
+                    <span>${idea}</span>
+                    <input type="checkbox" />
+                `;
+                listItem.querySelector('input').addEventListener('change', async function () {
+                    listItem.remove();
+                    await db.collection("ideas").doc(id).delete();
+                });
+                list.appendChild(listItem);
+            }
         }
     </script>
 </body>
