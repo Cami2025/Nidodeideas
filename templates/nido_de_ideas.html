@@ -146,7 +146,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
 
     <script>
-        // Configuración de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyCj87T0pxerzwQbc5QYdLa9-xZ-r6hgfqk",
             authDomain: "nidodeideas-2dacc.firebaseapp.com",
@@ -156,21 +158,23 @@
             appId: "1:949913637004:web:7064142709b252ff25aba9"
         };
 
-        // Inicializar Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         const form = document.getElementById('idea-form');
         const ideaInput = document.getElementById('idea-input');
         const categorySelect = document.getElementById('category-select');
 
-        // Cargar ideas desde Firestore
         window.onload = async () => {
-            const querySnapshot = await db.collection("ideas").get();
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                addIdeaToCategory(data.idea, data.category, doc.id);
-            });
+            try {
+                const querySnapshot = await getDocs(collection(db, "ideas"));
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    addIdeaToCategory(data.idea, data.category, doc.id);
+                });
+            } catch (error) {
+                console.error("Error al cargar ideas:", error);
+            }
         };
 
         form.addEventListener('submit', async (e) => {
@@ -179,9 +183,13 @@
             const category = categorySelect.value;
 
             if (idea) {
-                const docRef = await db.collection("ideas").add({ idea, category });
-                addIdeaToCategory(idea, category, docRef.id);
-                ideaInput.value = '';
+                try {
+                    const docRef = await addDoc(collection(db, "ideas"), { idea, category });
+                    addIdeaToCategory(idea, category, docRef.id);
+                    ideaInput.value = '';
+                } catch (error) {
+                    console.error("Error al guardar la idea:", error);
+                }
             }
         });
 
@@ -195,8 +203,12 @@
                     <input type="checkbox" />
                 `;
                 listItem.querySelector('input').addEventListener('change', async function () {
-                    listItem.remove();
-                    await db.collection("ideas").doc(id).delete();
+                    try {
+                        await deleteDoc(doc(db, "ideas", id));
+                        listItem.remove();
+                    } catch (error) {
+                        console.error("Error al eliminar la idea:", error);
+                    }
                 });
                 list.appendChild(listItem);
             }
